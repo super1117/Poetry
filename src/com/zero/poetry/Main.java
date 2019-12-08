@@ -1,6 +1,8 @@
 package com.zero.poetry;
 
+import com.google.gson.Gson;
 import com.zero.poetry.bean.AboutBean;
+import com.zero.poetry.bean.AuthorBean;
 import com.zero.poetry.bean.PoetryBean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,6 +18,8 @@ public class Main {
     private static List<AboutBean> list = new ArrayList<>();
 
     private static PoetryBean poetryBean;
+
+    private static AuthorBean authorBean;
 
     private static String formatContent(String content){
         String baseContent = Jsoup.clean(content, "", Whitelist.none(), new Document.OutputSettings().prettyPrint(false));
@@ -51,23 +55,65 @@ public class Main {
     }
 
     private static void getPoetryContent(Element element){
-        System.out.println(formatContent(element.outerHtml()));
+        poetryBean = new PoetryBean();
+        String title = element.select("h1").text();
+        String source = element.select(".source").text();
+        String contentHtml = element.select(".contson").outerHtml();
+        String tag = element.select(".tag").text();
+        poetryBean.setTitle(title);
+        poetryBean.setAuthor(source.split("：")[1]);
+        poetryBean.setDynasty(source.split("：")[0]);
+        poetryBean.setContent(formatContent(contentHtml));
+        poetryBean.setTag(tag);
+        System.out.println(poetryBean.toString());
     }
 
-    private static void getTransContent(String id){
+    private static void getTransContent(String id) throws  Exception{
         System.out.println("翻译 ： " + id);
+        String cookie = "login=true; Hm_lvt_04660099568f561a75456483228a9516=1575789883; Hm_lpvt_04660099568f561a75456483228a9516=1575789898";
+        Document document = Jsoup.connect("https://so.gushiwen.org/nocdn/ajaxfanyi.aspx?id=" + id).header("cookie", cookie).get();
+        String title = document.select(".contyishang h2").text();
+        String content = formatContent(document.select(".contyishang").outerHtml());
+        content = content.substring(title.length());
+        AboutBean bean = new AboutBean();
+        bean.setTitle(title);
+        bean.setContent(content);
+        list.add(bean);
+        System.out.println(bean.toString());
     }
 
-    private static void getAppreciationContent(String id){
+    private static void getAppreciationContent(String id) throws Exception{
         System.out.println("赏析 ： " + id);
+        String cookie = "login=true; Hm_lvt_04660099568f561a75456483228a9516=1575789883; Hm_lpvt_04660099568f561a75456483228a9516=1575789898";
+        Document document = Jsoup.connect("https://so.gushiwen.org/nocdn/ajaxshangxi.aspx?id=" + id).header("cookie", cookie).get();
+        String title = document.select(".contyishang h2").text();
+        String content = formatContent(document.select(".contyishang").outerHtml());
+        content = content.substring(title.length());
+        AboutBean bean = new AboutBean();
+        bean.setTitle(title);
+        bean.setContent(content);
+        list.add(bean);
+        System.out.println(bean);
+
     }
 
     private static void getAuthorInfo(Element element){
-        System.out.println("作者 ： " + element.text().substring(0, element.text().indexOf(" ")));
+        authorBean = new AuthorBean();
+        Elements image = element.select("img");
+        if(image != null && image.size() > 0){
+            String pic = image.get(0).attr("src");
+            authorBean.setPic(pic);
+        }
+        String content = element.text();
+        if(poetryBean != null){
+            content = content.substring(poetryBean.getAuthor().length());
+        }
+        authorBean.setAbout(content);
+        System.out.println(authorBean.toString());
     }
 
-    public static void main(String[] args) throws Exception{
-        Document document = Jsoup.connect("https://so.gushiwen.org/shiwenv_62802abab937.aspx").get();
+    private static void getPoetry(String url, int grade, int semester, int expand, int catgory, int obligatory) throws Exception{
+        Document document = Jsoup.connect(url).get();
         Elements elements = document.select(".main3 .left");
         Elements elementDiv = elements.first().children();
         for(Element element : elementDiv){
@@ -92,11 +138,74 @@ public class Main {
                 }else if(element.select("h2").size() > 0){
                     String title = element.select("h2").text();
                     System.out.println(title);
-                    String content = element.outerHtml();
-                    System.out.println(formatContent(content));
+                    String content = formatContent(element.select(".contyishang").outerHtml());
+                    content = content.substring(title.length());
+                    AboutBean bean = new AboutBean();
+                    bean.setTitle(title);
+                    bean.setContent(content);
+                    list.add(bean);
+                    System.out.println(bean.toString());
                 }
             }
         }
+        db.insert(poetryBean, toJson(list), toJson(authorBean), grade, semester, expand, catgory, obligatory);
+        poetryBean = null;
+        authorBean = null;
+        list.clear();
+        Thread.sleep(500);
+    }
+
+    private static String toJson(Object object){
+        return new Gson().toJson(object);
+    }
+
+    private static void getPrimaryPoetry() throws Exception{
+        Document document = Jsoup.connect("https://so.gushiwen.org/gushi/xiaoxue.aspx").get();
+        Elements main3 = document.select(".main3 .left .sons");
+        Elements typecont = main3.select(".typecont");
+        int grade = 1;
+        int semester;
+        int count = 0;
+        for (Element element : typecont){
+            String bookMl = element.select(".bookMl").text();
+            if(bookMl.startsWith("一")){
+                grade = 1;
+            }else if (bookMl.startsWith("二")){
+                grade = 2;
+            }else if (bookMl.startsWith("三")){
+                grade = 3;
+            }else if (bookMl.startsWith("四")){
+                grade = 4;
+            }else if (bookMl.startsWith("五")){
+                grade = 5;
+            }else if (bookMl.startsWith("六")){
+                grade = 6;
+            }
+            semester = bookMl.contains("上册") ? 1 : 0;
+            Elements tagA = element.select("a");
+            for(Element a : tagA){
+                count++;
+                String url = a.attr("href");
+                System.out.println(grade + " " + semester + " " + url);
+                getPoetry(url, grade, semester, 0, 0, 1);
+            }
+        }
+        System.out.println("共计： " + count + " 首");
+    }
+
+    private static void getMiddlePoetry(){
+
+    }
+
+    private static void getHighPoetry(){
+
+    }
+
+    private static DBOperation db;
+
+    public static void main(String[] args) throws Exception{
+        db = new DBOperation();
+        getPrimaryPoetry();
     }
 
 }

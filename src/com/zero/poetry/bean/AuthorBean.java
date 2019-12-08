@@ -21,4 +21,12 @@ public class AuthorBean {
     public void setPic(String pic) {
         this.pic = pic;
     }
+
+    @Override
+    public String toString() {
+        return "AuthorBean{" +
+                "about='" + about + '\'' +
+                ", pic='" + pic + '\'' +
+                '}';
+    }
 }
