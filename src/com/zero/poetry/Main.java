@@ -148,7 +148,7 @@ public class Main {
                 }
             }
         }
-        db.insert(poetryBean, toJson(list), toJson(authorBean), grade, semester, expand, catgory, obligatory);
+//        db.insert(poetryBean, toJson(list), toJson(authorBean), grade, semester, expand, catgory, obligatory);
         poetryBean = null;
         authorBean = null;
         list.clear();
@@ -159,6 +159,10 @@ public class Main {
         return new Gson().toJson(object);
     }
 
+    /**
+     * 小学古诗词
+     * @throws Exception
+     */
     private static void getPrimaryPoetry() throws Exception{
         Document document = Jsoup.connect("https://so.gushiwen.org/gushi/xiaoxue.aspx").get();
         Elements main3 = document.select(".main3 .left .sons");
@@ -193,19 +197,101 @@ public class Main {
         System.out.println("共计： " + count + " 首");
     }
 
-    private static void getMiddlePoetry(){
-
+    /**
+     * 获取文言文
+     * @param path
+     * @throws Exception
+     */
+    private  static void getClassical(String path) throws Exception {
+        Document document = Jsoup.connect(path).get();
+        Elements elements = document.select(".main3 .left .sons .typecont a");
+        int count = 0;
+        for(Element element : elements){
+            String host = "https://so.gushiwen.org";
+            String url = element.attr("href");
+            getPoetry(host + url, 1, 1, 0, 0, 1);
+            count ++;
+        }
+        System.out.println("共计： " + count + "篇");
     }
 
-    private static void getHighPoetry(){
+    /**
+     * 初中古诗词
+     */
+    private static void getMiddlePoetry() throws Exception{
+        Document document = Jsoup.connect("https://so.gushiwen.org/gushi/chuzhong.aspx").get();
+        Elements main3 = document.select(".main3 .left .sons");
+        Elements typecont = main3.select(".typecont");
+        int grade = 1;
+        int semester;
+        int count = 0;
+        int expand = 0;
+        for (Element element : typecont){
+            String bookMl = element.select(".bookMl").text();
+            if(bookMl.startsWith("七")){
+                grade = 7;
+            }else if (bookMl.startsWith("八")){
+                grade = 8;
+            }else if (bookMl.startsWith("九")){
+                grade = 9;
+            }
+            semester = bookMl.contains("上册") ? 1 : 0;
+            expand = bookMl.contains("课内") ? 0 : 1;
+            Elements tagA = element.select("a");
+            for(Element a : tagA){
+                count++;
+                String url = a.attr("href");
+                System.out.println(grade + " " + semester + " " + url);
+                getPoetry(url, grade, semester, expand, 0, 1);
+            }
+        }
+        System.out.println("共计： " + count + " 首");
+    }
 
+    /**
+     * 高中古诗词
+     */
+    private static void getHighPoetry() throws Exception{
+        Document document = Jsoup.connect("https://so.gushiwen.org/gushi/gaozhong.aspx").get();
+        Elements main3 = document.select(".main3 .left .sons");
+        Elements typecont = main3.select(".typecont");
+        int grade = 12;
+        int count = 0;
+        int category = 0;
+        int obligatory = 1;
+        for (Element element : typecont){
+            String bookMl = element.select(".bookMl").text();
+            if(bookMl.contains("文言文必修")){
+                obligatory = 1;
+                category = 1;
+            }else if (bookMl.contains("文言文选择性必修")){
+                obligatory = 2;
+                category = 1;
+            }else if (bookMl.contains("文言文选修")){
+                obligatory = 3;
+                category = 1;
+            }
+            Elements tagA = element.select("a");
+            for(Element a : tagA){
+                count++;
+                String url = a.attr("href");
+                getPoetry(url, grade, 0, 0, category, obligatory);
+            }
+        }
+        System.out.println("共计： " + count + " 首");
     }
 
     private static DBOperation db;
 
     public static void main(String[] args) throws Exception{
-        db = new DBOperation();
-        getPrimaryPoetry();
+//        db = new DBOperation();
+//        getPrimaryPoetry();
+        String primary = "https://so.gushiwen.org/wenyan/xiaowen.aspx";
+        String middle = "https://so.gushiwen.org/wenyan/chuwen.aspx";
+        String high = "https://so.gushiwen.org/wenyan/gaowen.aspx";
+//        getClassical(primary);
+//        getMiddlePoetry();
+        getHighPoetry();
     }
 
 }

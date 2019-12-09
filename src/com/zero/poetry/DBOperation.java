@@ -1,18 +1,15 @@
 package com.zero.poetry;
 
-import com.google.gson.Gson;
-import com.zero.poetry.bean.AboutBean;
 import com.zero.poetry.bean.PoetryBean;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.List;
 
 public class DBOperation {
 
-    private static Connection connection=DBConnect.getConnection();
+    private static Connection connection = DBConnect.getConnection();
 
     public void insert(PoetryBean poetry, String about, String authorInfo, int grade, int semester, int expand, int type, int obligatory) throws Exception{
         String sql = "INSERT INTO poetry (`author`,`dynasty`,`poetry`,`about`,`author_info`,`grade`,`semester`,`expand`,`type`,`obligatory`,`tag`) " +
@@ -38,15 +35,12 @@ public class DBOperation {
         Statement statement = connection.createStatement();
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
-//            PoetryBean poetry = new Gson().fromJson(rs.getString(4), PoetryBean.class);
-//            System.out.println(poetry.toString());
             String poetry = rs.getString(4);
             System.out.println(poetry);
             String about = rs.getString(5);
             System.out.println(about);
         }
     }
-
 
     public static void main(String[] args) throws Exception {
         query();
