@@ -148,7 +148,7 @@ public class Main {
                 }
             }
         }
-//        db.insert(poetryBean, toJson(list), toJson(authorBean), grade, semester, expand, catgory, obligatory);
+        db.insert(poetryBean, toJson(list), toJson(authorBean), grade, semester, expand, catgory, obligatory);
         poetryBean = null;
         authorBean = null;
         list.clear();
@@ -185,7 +185,7 @@ public class Main {
             }else if (bookMl.startsWith("六")){
                 grade = 6;
             }
-            semester = bookMl.contains("上册") ? 1 : 0;
+            semester = bookMl.contains("上册") ? 0 : 1;
             Elements tagA = element.select("a");
             for(Element a : tagA){
                 count++;
@@ -202,14 +202,14 @@ public class Main {
      * @param path
      * @throws Exception
      */
-    private  static void getClassical(String path) throws Exception {
+    private  static void getClassical(String path, int grade) throws Exception {
         Document document = Jsoup.connect(path).get();
         Elements elements = document.select(".main3 .left .sons .typecont a");
         int count = 0;
         for(Element element : elements){
             String host = "https://so.gushiwen.org";
             String url = element.attr("href");
-            getPoetry(host + url, 1, 1, 0, 0, 1);
+            getPoetry(host + url, grade, 0, 0, 1, 1);
             count ++;
         }
         System.out.println("共计： " + count + "篇");
@@ -225,7 +225,7 @@ public class Main {
         int grade = 1;
         int semester;
         int count = 0;
-        int expand = 0;
+        int expand;
         for (Element element : typecont){
             String bookMl = element.select(".bookMl").text();
             if(bookMl.startsWith("七")){
@@ -235,7 +235,7 @@ public class Main {
             }else if (bookMl.startsWith("九")){
                 grade = 9;
             }
-            semester = bookMl.contains("上册") ? 1 : 0;
+            semester = bookMl.contains("上册") ? 0 : 1;
             expand = bookMl.contains("课内") ? 0 : 1;
             Elements tagA = element.select("a");
             for(Element a : tagA){
@@ -257,25 +257,21 @@ public class Main {
         Elements typecont = main3.select(".typecont");
         int grade = 12;
         int count = 0;
-        int category = 0;
         int obligatory = 1;
         for (Element element : typecont){
             String bookMl = element.select(".bookMl").text();
             if(bookMl.contains("文言文必修")){
                 obligatory = 1;
-                category = 1;
             }else if (bookMl.contains("文言文选择性必修")){
                 obligatory = 2;
-                category = 1;
             }else if (bookMl.contains("文言文选修")){
                 obligatory = 3;
-                category = 1;
             }
             Elements tagA = element.select("a");
             for(Element a : tagA){
                 count++;
                 String url = a.attr("href");
-                getPoetry(url, grade, 0, 0, category, obligatory);
+                getPoetry(url, grade, 0, 0, 0, obligatory);
             }
         }
         System.out.println("共计： " + count + " 首");
@@ -284,14 +280,14 @@ public class Main {
     private static DBOperation db;
 
     public static void main(String[] args) throws Exception{
-//        db = new DBOperation();
+        db = new DBOperation();
 //        getPrimaryPoetry();
         String primary = "https://so.gushiwen.org/wenyan/xiaowen.aspx";
         String middle = "https://so.gushiwen.org/wenyan/chuwen.aspx";
         String high = "https://so.gushiwen.org/wenyan/gaowen.aspx";
-//        getClassical(primary);
+        getClassical(high, 12);
 //        getMiddlePoetry();
-        getHighPoetry();
+//        getHighPoetry();
     }
 
 }

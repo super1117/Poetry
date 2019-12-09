@@ -1,5 +1,6 @@
 package com.zero.poetry;
 
+import com.google.gson.Gson;
 import com.zero.poetry.bean.PoetryBean;
 
 import java.sql.Connection;
@@ -18,7 +19,7 @@ public class DBOperation {
         ps = connection.prepareStatement(sql);
         ps.setString(1, poetry.getAuthor());
         ps.setString(2, poetry.getDynasty());
-        ps.setString(3, poetry.getContent());
+        ps.setString(3, poetry.toJson());
         ps.setString(4, about);
         ps.setString(5, authorInfo);
         ps.setInt(6, grade);
@@ -31,12 +32,13 @@ public class DBOperation {
     }
 
     public static void query() throws Exception{
-        String sql = "SELECT * FROM poetry WHERE id = 100";
+        String sql = "SELECT * FROM poetry WHERE id = 1";
         Statement statement = connection.createStatement();
         ResultSet rs = statement.executeQuery(sql);
         while (rs.next()){
             String poetry = rs.getString(4);
-            System.out.println(poetry);
+            PoetryBean p = new Gson().fromJson(poetry, PoetryBean.class);
+            System.out.println(p.toString());
             String about = rs.getString(5);
             System.out.println(about);
         }

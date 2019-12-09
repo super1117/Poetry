@@ -52,6 +52,10 @@ public class PoetryBean {
         this.tag = tag;
     }
 
+    public String toJson(){
+        return "{\"title\":\"" + title + "\",\"content\":\"" + content + "\"}";
+    }
+
     @Override
     public String toString() {
         return "PoetryBean{" +

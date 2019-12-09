@@ -1,7 +1,5 @@
 package com.zero.poetry;
 
-import com.zero.poetry.bean.PoetryBean;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -12,7 +10,7 @@ public class DBConnect {
 
     private final static String USER = "root";
 
-    private final static String PASSWORD = "root";
+    private final static String PASSWORD = "123456";
 
     private static Connection connection=null;
 
